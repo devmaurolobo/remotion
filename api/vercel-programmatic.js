@@ -37,6 +37,9 @@ const renderVideoProgrammatic = async (videoData) => {
       process.env.REMOTION_TEMP_DIR = '/tmp';
       process.env.REMOTION_BROWSER_CACHE_DIR = '/tmp';
       
+      // Desabilita o download automático do Chrome
+      process.env.REMOTION_DISABLE_BROWSER_DOWNLOAD = 'true';
+      
       // Importa os módulos do Remotion programaticamente
       const { bundle} = require('@remotion/bundler');
       const { getCompositions, renderMedia} = require('@remotion/renderer');
@@ -78,8 +81,15 @@ const renderVideoProgrammatic = async (videoData) => {
 
       console.log('Bundle criado, buscando composições...');
 
-      // Busca as composições
-      const compositions = await getCompositions(bundled);
+      // Busca as composições com configurações específicas para Vercel
+      const compositions = await getCompositions(bundled, {
+        onBrowserDownload: () => {
+          console.log('Tentando baixar browser...');
+          return Promise.resolve();
+        },
+        browserExecutable: null, // Usa o Chrome disponível no sistema
+      });
+      
       console.log('Composições encontradas:', compositions.map(c => c.id));
 
       // Seleciona a composição VideoComposition
@@ -109,6 +119,7 @@ const renderVideoProgrammatic = async (videoData) => {
         onProgress: (progress) => {
           console.log(`Progresso: ${Math.round(progress * 100)}%`);
         },
+        browserExecutable: null, // Usa o Chrome disponível no sistema
       });
 
       console.log('Renderização concluída, lendo arquivo...');
