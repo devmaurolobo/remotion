@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-working.js",
+      "src": "api/vercel-programmatic.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-working.js"
+      "dest": "/api/vercel-programmatic.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-working.js"
+      "dest": "/api/vercel-programmatic.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-working.js"
+      "dest": "/api/vercel-programmatic.js"
     }
   ],
   "env": {
