@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-polling.js",
+      "src": "api/vercel-persistent.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-polling.js"
+      "dest": "/api/vercel-persistent.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-polling.js"
+      "dest": "/api/vercel-persistent.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-polling.js"
+      "dest": "/api/vercel-persistent.js"
     }
   ],
   "env": {
