@@ -1,0 +1,58 @@
+{
+  "name": "remotion-video-generator",
+  "version": "1.0.0",
+  "description": "Sistema de geração de vídeos dinâmicos com Remotion e Lottie",
+  "main": "api/vercel.js",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts VideoComposition out/video.mp4",
+    "render": "remotion render src/index.ts VideoComposition",
+    "api": "node api/server.js",
+    "api:vercel": "node api/vercel.js",
+    "start": "concurrently \"npm run api\" \"npm run dev\"",
+    "test-api": "node examples/client-example.js",
+    "test-simple": "node examples/simple-test.js",
+    "vercel-build": "echo 'Build completed'",
+    "vercel-dev": "npm run api:vercel"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.332",
+    "aws-sdk": "^2.1400.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "lottie-react": "^2.4.0",
+    "multer": "^1.4.5-lts.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "remotion": "^4.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/fluent-ffmpeg": "^2.1.21",
+    "@types/multer": "^1.4.7",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/uuid": "^9.0.1",
+    "concurrently": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "remotion",
+    "lottie",
+    "video",
+    "generation",
+    "api",
+    "serverless",
+    "vercel"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
