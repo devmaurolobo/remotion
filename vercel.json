@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-minimal-video.js",
+      "src": "api/vercel-lambda-render.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-minimal-video.js"
+      "dest": "/api/vercel-lambda-render.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-minimal-video.js"
+      "dest": "/api/vercel-lambda-render.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-minimal-video.js"
+      "dest": "/api/vercel-lambda-render.js"
     }
   ],
   "env": {
