@@ -20,11 +20,6 @@
       "dest": "/api/server.js"
     }
   ],
-  "functions": {
-    "api/server.js": {
-      "maxDuration": 300
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
