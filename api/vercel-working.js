@@ -27,9 +27,43 @@ const validateVideoData = (data) => {
   return {valid: true};
 };
 
+// Função para instalar Remotion CLI se necessário
+const ensureRemotionCLI = async () => {
+  return new Promise((resolve, reject) => {
+    const { exec } = require('child_process');
+    
+    // Tenta instalar o Remotion CLI globalmente no /tmp
+    const installCommand = 'npm install -g @remotion/cli';
+    
+    console.log('Instalando Remotion CLI...');
+    
+    exec(installCommand, {
+      cwd: '/tmp',
+      maxBuffer: 1024 * 1024 * 10, // 10MB buffer
+      env: {
+        ...process.env,
+        NPM_CONFIG_CACHE: '/tmp/.npm',
+        NPM_CONFIG_PREFIX: '/tmp/.npm',
+        NODE_ENV: 'production'
+      }
+    }, (error, stdout, stderr) => {
+      if (error) {
+        console.log('Erro na instalação do CLI (pode ser normal):', error.message);
+        // Não rejeita, apenas continua
+      } else {
+        console.log('Remotion CLI instalado com sucesso');
+      }
+      resolve();
+    });
+  });
+};
+
 // Função para renderizar vídeo com Remotion (versão funcional)
 const renderVideo = async (videoData) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    // Primeiro, tenta garantir que o CLI está disponível
+    await ensureRemotionCLI();
+    
     // Cria arquivo JSON temporário para as props
     const propsPath = path.join('/tmp', `props-${uuidv4()}.json`);
     const outputPath = path.join('/tmp', `video-${uuidv4()}.mp4`);
@@ -41,16 +75,33 @@ const renderVideo = async (videoData) => {
       return;
     }
     
-    // Usa o caminho direto para o CLI do Remotion
-    const remotionCliPath = path.join(process.cwd(), 'node_modules', '@remotion', 'cli', 'dist', 'cli.js');
+    // Tenta diferentes caminhos para o CLI do Remotion
+    const possiblePaths = [
+      path.join(process.cwd(), 'node_modules', '@remotion', 'cli', 'dist', 'cli.js'),
+      path.join(process.cwd(), 'node_modules', '.bin', 'remotion'),
+      path.join('/tmp', 'node_modules', '@remotion', 'cli', 'dist', 'cli.js'),
+      path.join('/tmp', 'node_modules', '.bin', 'remotion'),
+      '/tmp/node_modules/.bin/remotion',
+      '/usr/local/bin/remotion'
+    ];
     
-    // Verifica se o arquivo existe
-    if (!fs.existsSync(remotionCliPath)) {
-      reject(new Error('CLI do Remotion não encontrado'));
-      return;
+    let remotionCliPath = null;
+    for (const possiblePath of possiblePaths) {
+      if (fs.existsSync(possiblePath)) {
+        remotionCliPath = possiblePath;
+        console.log('CLI do Remotion encontrado em:', remotionCliPath);
+        break;
+      }
     }
     
-    const command = `node "${remotionCliPath}" render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
+    // Se não encontrou, usa npx como fallback
+    let command;
+    if (remotionCliPath) {
+      command = `node "${remotionCliPath}" render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
+    } else {
+      console.log('CLI do Remotion não encontrado, usando npx como fallback');
+      command = `npx remotion render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
+    }
     
     console.log('Executando comando:', command);
     
@@ -63,7 +114,8 @@ const renderVideo = async (videoData) => {
         REMOTION_CACHE_DIR: '/tmp',
         REMOTION_OUTPUT_DIR: '/tmp',
         NPM_CONFIG_CACHE: '/tmp/.npm',
-        NPM_CONFIG_PREFIX: '/tmp/.npm'
+        NPM_CONFIG_PREFIX: '/tmp/.npm',
+        NODE_ENV: 'production'
       }
     }, (error, stdout, stderr) => {
       // Remove arquivo temporário de props
