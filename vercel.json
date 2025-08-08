@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-real-render.js",
+      "src": "api/vercel-polling.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-real-render.js"
+      "dest": "/api/vercel-polling.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-real-render.js"
+      "dest": "/api/vercel-polling.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-real-render.js"
+      "dest": "/api/vercel-polling.js"
     }
   ],
   "env": {
