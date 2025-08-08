@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const {exec} = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const {v4: uuidv4} = require('uuid');
@@ -42,17 +41,21 @@ const renderVideo = async (videoData) => {
       return;
     }
     
-    const command = `npx remotion render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
+    // Usa node_modules diretamente em vez de npx
+    const command = `node node_modules/@remotion/cli/dist/cli.js render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
     
     console.log('Executando comando:', command);
     
+    const { exec } = require('child_process');
     exec(command, {
       cwd: process.cwd(),
       maxBuffer: 1024 * 1024 * 50, // 50MB buffer
       env: {
         ...process.env,
         REMOTION_CACHE_DIR: '/tmp',
-        REMOTION_OUTPUT_DIR: '/tmp'
+        REMOTION_OUTPUT_DIR: '/tmp',
+        NPM_CONFIG_CACHE: '/tmp/.npm',
+        NPM_CONFIG_PREFIX: '/tmp/.npm'
       }
     }, (error, stdout, stderr) => {
       // Remove arquivo temporário de props

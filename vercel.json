@@ -2,19 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-simple.js",
+      "src": "api/vercel-minimal.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-simple.js"
+      "dest": "/api/vercel-minimal.js"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "REMOTION_CACHE_DIR": "/tmp",
-    "REMOTION_OUTPUT_DIR": "/tmp"
+    "NODE_ENV": "production"
   }
 }
