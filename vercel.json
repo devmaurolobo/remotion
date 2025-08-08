@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-lottie-render.js",
+      "src": "api/vercel-simple-lottie.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-lottie-render.js"
+      "dest": "/api/vercel-simple-lottie.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-lottie-render.js"
+      "dest": "/api/vercel-simple-lottie.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-lottie-render.js"
+      "dest": "/api/vercel-simple-lottie.js"
     }
   ],
   "env": {
