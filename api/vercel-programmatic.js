@@ -40,6 +40,16 @@ const renderVideoProgrammatic = async (videoData) => {
       // Desabilita o download automático do Chrome
       process.env.REMOTION_DISABLE_BROWSER_DOWNLOAD = 'true';
       
+      // Sobrescreve a função de download do browser para evitar erros
+      const originalMkdir = require('fs').promises.mkdir;
+      require('fs').promises.mkdir = async (path, options) => {
+        if (path.includes('.remotion')) {
+          console.log('Interceptado tentativa de criar diretório .remotion:', path);
+          return Promise.resolve();
+        }
+        return originalMkdir(path, options);
+      };
+      
       // Importa os módulos do Remotion programaticamente
       const { bundle} = require('@remotion/bundler');
       const { getCompositions, renderMedia} = require('@remotion/renderer');

@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-programmatic.js",
+      "src": "api/vercel-simple-render.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-programmatic.js"
+      "dest": "/api/vercel-simple-render.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-programmatic.js"
+      "dest": "/api/vercel-simple-render.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-programmatic.js"
+      "dest": "/api/vercel-simple-render.js"
     }
   ],
   "env": {

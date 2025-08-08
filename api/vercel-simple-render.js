@@ -16,89 +16,71 @@ app.use(express.urlencoded({extended: true, limit: '50mb'}));
 const validateVideoData = (data) => {
   const required = ['texto_principal'];
   const missing = required.filter(field => !data[field]);
-  
+
   if (missing.length > 0) {
     return {
       valid: false,
       error: `Campos obrigatórios ausentes: ${missing.join(', ')}`
     };
   }
-  
+
   return {valid: true};
 };
 
-// Função para renderizar vídeo usando Remotion programaticamente
-const renderVideo = async (videoData) => {
+// Função para criar um vídeo simples usando FFmpeg
+const createSimpleVideo = async (videoData) => {
   return new Promise((resolve, reject) => {
     try {
-      // Importa o Remotion dinamicamente
-      const { bundle } = require('@remotion/bundler');
-      const { getCompositions, renderMedia } = require('@remotion/renderer');
-      const { selectComposition } = require('@remotion/select-composition');
+      const ffmpeg = require('fluent-ffmpeg');
       
-      const outputPath = path.join('/tmp', `video-${uuidv4()}.mp4`);
+      console.log('Criando vídeo simples com FFmpeg...');
       
-      console.log('Iniciando renderização programática...');
+      // Cria um arquivo de texto temporário com o conteúdo
+      const textFile = path.join('/tmp', `text-${uuidv4()}.txt`);
+      const outputFile = path.join('/tmp', `video-${uuidv4()}.mp4`);
       
-      // Bundle do projeto
-      bundle({
-        entryPoint: path.join(process.cwd(), 'src', 'index.ts'),
-        webpackOverride: (config) => config,
-        onProgress: (progress) => {
-          console.log('Progresso do bundle:', progress);
-        }
-      }).then(async (bundleLocation) => {
-        try {
-          // Obtém as composições
-          const compositions = await getCompositions(bundleLocation);
-          const composition = selectComposition({
-            compositions,
-            id: 'VideoComposition'
-          });
+      const textContent = videoData.texto_principal || 'Vídeo gerado com sucesso!';
+      
+      fs.writeFileSync(textFile, textContent);
+      
+      // Comando FFmpeg para criar um vídeo simples
+      const command = ffmpeg()
+        .input('color=c=black:size=1280x720:rate=30')
+        .inputOptions(['-f lavfi'])
+        .duration(6)
+        .videoCodec('libx264')
+        .audioCodec('aac')
+        .outputOptions([
+          '-vf', `drawtext=text='${textContent}':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2`,
+          '-pix_fmt', 'yuv420p'
+        ])
+        .output(outputFile)
+        .on('end', () => {
+          console.log('Vídeo criado com sucesso!');
           
-          if (!composition) {
-            reject(new Error('Composição VideoComposition não encontrada'));
-            return;
-          }
+          // Lê o arquivo de vídeo
+          const videoBuffer = fs.readFileSync(outputFile);
           
-          // Renderiza o vídeo
-          await renderMedia({
-            composition,
-            serveUrl: bundleLocation,
-            codec: 'h264',
-            outputLocation: outputPath,
-            inputProps: videoData
-          });
-          
-          console.log('Renderização concluída:', outputPath);
-          
-          // Verifica se o arquivo foi criado
-          if (!fs.existsSync(outputPath)) {
-            reject(new Error('Arquivo de vídeo não foi gerado'));
-            return;
-          }
-          
-          // Lê o arquivo
-          const videoBuffer = fs.readFileSync(outputPath);
-          
-          // Remove o arquivo temporário
+          // Remove arquivos temporários
           try {
-            fs.unlinkSync(outputPath);
+            fs.unlinkSync(textFile);
+            fs.unlinkSync(outputFile);
           } catch (e) {
-            console.log('Erro ao remover arquivo temporário:', e);
+            console.log('Erro ao remover arquivos temporários:', e);
           }
           
           resolve(videoBuffer);
-          
-        } catch (error) {
-          reject(new Error(`Erro na renderização: ${error.message}`));
-        }
-      }).catch((error) => {
-        reject(new Error(`Erro no bundle: ${error.message}`));
-      });
+        })
+        .on('error', (err) => {
+          console.error('Erro no FFmpeg:', err);
+          reject(new Error(`Erro no FFmpeg: ${err.message}`));
+        });
+      
+      command.run();
       
     } catch (error) {
-      reject(new Error(`Erro ao importar Remotion: ${error.message}`));
+      console.error('Erro ao criar vídeo simples:', error);
+      reject(new Error(`Erro ao criar vídeo simples: ${error.message}`));
     }
   });
 };
@@ -107,7 +89,7 @@ const renderVideo = async (videoData) => {
 app.post('/api/generate-video', async (req, res) => {
   try {
     const videoData = req.body;
-    
+
     // Valida os dados recebidos
     const validation = validateVideoData(videoData);
     if (!validation.valid) {
@@ -116,19 +98,19 @@ app.post('/api/generate-video', async (req, res) => {
         error: validation.error
       });
     }
-    
-    console.log('Iniciando renderização do vídeo');
+
+    console.log('Iniciando geração de vídeo simples');
     console.log('Dados recebidos:', videoData);
-    
-    // Renderiza o vídeo
-    const videoBuffer = await renderVideo(videoData);
-    
+
+    // Cria o vídeo usando FFmpeg
+    const videoBuffer = await createSimpleVideo(videoData);
+
     // Retorna o vídeo como resposta
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Content-Disposition', `attachment; filename="video-${Date.now()}.mp4"`);
     res.setHeader('Content-Length', videoBuffer.length);
     res.send(videoBuffer);
-    
+
   } catch (error) {
     console.error('Erro ao gerar vídeo:', error);
     res.status(500).json({
@@ -148,14 +130,14 @@ app.post('/api/upload', multer().single('file'), (req, res) => {
         error: 'Nenhum arquivo enviado'
       });
     }
-    
+
     res.json({
       success: true,
       filename: req.file.originalname,
       size: req.file.size,
       mimetype: req.file.mimetype
     });
-    
+
   } catch (error) {
     console.error('Erro no upload:', error);
     res.status(500).json({
@@ -170,7 +152,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    service: 'Video Generator API (Vercel Simple Render)',
+    service: 'Video Generator API (Simple FFmpeg)',
     environment: process.env.NODE_ENV || 'development'
   });
 });
