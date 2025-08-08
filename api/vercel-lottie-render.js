@@ -88,16 +88,14 @@ const renderLottieVideo = async (videoData) => {
       
       console.log('Entry point encontrado:', entryPoint);
       
-      // Cria o bundle
+      // Cria o bundle com configuração simplificada
       const bundleResult = await bundle({
         entryPoint,
         webpackOverride: (config) => {
-          // Configurações específicas para Vercel
+          // Configurações básicas para Vercel
           config.resolve.fallback = {
             ...config.resolve.fallback,
-            fs: false,
-            path: require.resolve('path-browserify'),
-            os: require.resolve('os-browserify/browser')
+            fs: false
           };
           return config;
         }
