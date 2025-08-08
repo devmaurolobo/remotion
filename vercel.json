@@ -2,22 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/vercel-real-video.js",
+      "src": "api/vercel-memory.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/vercel-real-video.js"
+      "dest": "/api/vercel-memory.js"
     },
     {
       "src": "/videos/(.*)",
-      "dest": "/api/vercel-real-video.js"
+      "dest": "/api/vercel-memory.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "/api/vercel-real-video.js"
+      "dest": "/api/vercel-memory.js"
     }
   ],
   "env": {
