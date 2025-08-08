@@ -44,12 +44,22 @@ const renderVideoWithLambda = async (videoData) => {
       
       // Sobrescreve a função de download do browser para evitar erros
       const originalMkdir = require('fs').promises.mkdir;
+      const originalMkdirSync = require('fs').mkdirSync;
+      
       require('fs').promises.mkdir = async (path, options) => {
         if (path.includes('.remotion')) {
           console.log('Interceptado tentativa de criar diretório .remotion:', path);
           return Promise.resolve();
         }
         return originalMkdir(path, options);
+      };
+      
+      require('fs').mkdirSync = (path, options) => {
+        if (path.includes('.remotion')) {
+          console.log('Interceptado tentativa de criar diretório .remotion (sync):', path);
+          return;
+        }
+        return originalMkdirSync(path, options);
       };
       
       // Importa o Remotion Lambda
