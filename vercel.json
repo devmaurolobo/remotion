@@ -10,10 +10,17 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/vercel-working.js"
+    },
+    {
+      "src": "/videos/(.*)",
+      "dest": "/api/vercel-working.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/api/vercel-working.js"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
     "REMOTION_CACHE_DIR": "/tmp",
     "REMOTION_OUTPUT_DIR": "/tmp"
   }

@@ -27,75 +27,79 @@ const validateVideoData = (data) => {
   return {valid: true};
 };
 
-// Função para renderizar vídeo com Remotion (versão funcional)
+// Função para renderizar vídeo usando Remotion programaticamente
 const renderVideo = async (videoData) => {
   return new Promise((resolve, reject) => {
-    // Cria arquivo JSON temporário para as props
-    const propsPath = path.join('/tmp', `props-${uuidv4()}.json`);
-    const outputPath = path.join('/tmp', `video-${uuidv4()}.mp4`);
-    
     try {
-      fs.writeFileSync(propsPath, JSON.stringify(videoData, null, 2));
+      // Importa o Remotion dinamicamente
+      const { bundle } = require('@remotion/bundler');
+      const { getCompositions, renderMedia } = require('@remotion/renderer');
+      const { selectComposition } = require('@remotion/select-composition');
+      
+      const outputPath = path.join('/tmp', `video-${uuidv4()}.mp4`);
+      
+      console.log('Iniciando renderização programática...');
+      
+      // Bundle do projeto
+      bundle({
+        entryPoint: path.join(process.cwd(), 'src', 'index.ts'),
+        webpackOverride: (config) => config,
+        onProgress: (progress) => {
+          console.log('Progresso do bundle:', progress);
+        }
+      }).then(async (bundleLocation) => {
+        try {
+          // Obtém as composições
+          const compositions = await getCompositions(bundleLocation);
+          const composition = selectComposition({
+            compositions,
+            id: 'VideoComposition'
+          });
+          
+          if (!composition) {
+            reject(new Error('Composição VideoComposition não encontrada'));
+            return;
+          }
+          
+          // Renderiza o vídeo
+          await renderMedia({
+            composition,
+            serveUrl: bundleLocation,
+            codec: 'h264',
+            outputLocation: outputPath,
+            inputProps: videoData
+          });
+          
+          console.log('Renderização concluída:', outputPath);
+          
+          // Verifica se o arquivo foi criado
+          if (!fs.existsSync(outputPath)) {
+            reject(new Error('Arquivo de vídeo não foi gerado'));
+            return;
+          }
+          
+          // Lê o arquivo
+          const videoBuffer = fs.readFileSync(outputPath);
+          
+          // Remove o arquivo temporário
+          try {
+            fs.unlinkSync(outputPath);
+          } catch (e) {
+            console.log('Erro ao remover arquivo temporário:', e);
+          }
+          
+          resolve(videoBuffer);
+          
+        } catch (error) {
+          reject(new Error(`Erro na renderização: ${error.message}`));
+        }
+      }).catch((error) => {
+        reject(new Error(`Erro no bundle: ${error.message}`));
+      });
+      
     } catch (error) {
-      reject(new Error(`Erro ao criar arquivo de props: ${error.message}`));
-      return;
+      reject(new Error(`Erro ao importar Remotion: ${error.message}`));
     }
-    
-    // Usa npx diretamente com configurações específicas para Vercel
-    const command = `npx --yes @remotion/cli render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
-    
-    console.log('Executando comando:', command);
-    
-    const { exec } = require('child_process');
-    exec(command, {
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024 * 50, // 50MB buffer
-      env: {
-        ...process.env,
-        REMOTION_CACHE_DIR: '/tmp',
-        REMOTION_OUTPUT_DIR: '/tmp',
-        NPM_CONFIG_CACHE: '/tmp/.npm',
-        NPM_CONFIG_PREFIX: '/tmp/.npm',
-        NODE_ENV: 'production',
-        // Força o npm a usar o cache temporário
-        npm_config_cache: '/tmp/.npm',
-        npm_config_prefix: '/tmp/.npm'
-      }
-    }, (error, stdout, stderr) => {
-      // Remove arquivo temporário de props
-      try {
-        fs.unlinkSync(propsPath);
-      } catch (e) {
-        // Ignora erro se arquivo não existir
-      }
-      
-      if (error) {
-        console.error('Erro na renderização:', error);
-        console.error('Stderr:', stderr);
-        reject(new Error(`Erro na renderização: ${error.message}`));
-        return;
-      }
-      
-      console.log('Renderização concluída:', stdout);
-      
-      // Verifica se o arquivo foi criado
-      if (!fs.existsSync(outputPath)) {
-        reject(new Error('Arquivo de vídeo não foi gerado'));
-        return;
-      }
-      
-      // Lê o arquivo
-      const videoBuffer = fs.readFileSync(outputPath);
-      
-      // Remove o arquivo temporário
-      try {
-        fs.unlinkSync(outputPath);
-      } catch (e) {
-        console.log('Erro ao remover arquivo temporário:', e);
-      }
-      
-      resolve(videoBuffer);
-    });
   });
 };
 
@@ -166,7 +170,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    service: 'Video Generator API (Vercel Working)',
+    service: 'Video Generator API (Vercel Simple Render)',
     environment: process.env.NODE_ENV || 'development'
   });
 });
