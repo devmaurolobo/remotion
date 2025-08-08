@@ -14,7 +14,7 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({extended: true, limit: '50mb'}));
 
 // Configuração do Multer para upload de arquivos
-const storage = multer.memoryStorage(); // Usa memória em vez de disco para serverless
+const storage = multer.memoryStorage();
 const upload = multer({storage});
 
 // Interface para validação de dados
@@ -38,12 +38,6 @@ const renderVideo = async (videoData, outputPath) => {
     // Cria arquivo JSON temporário para as props
     const propsPath = path.join('/tmp', `props-${uuidv4()}.json`);
     fs.writeFileSync(propsPath, JSON.stringify(videoData, null, 2));
-    
-    // Garante que o diretório de saída existe
-    const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, {recursive: true});
-    }
     
     const command = `npx remotion render src/index.ts VideoComposition "${outputPath}" --props="${propsPath}"`;
     
@@ -160,7 +154,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    service: 'Video Generator API (Serverless)',
+    service: 'Video Generator API (Netlify Functions)',
     environment: process.env.NODE_ENV || 'development'
   });
 });
@@ -174,15 +168,5 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Para desenvolvimento local
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`📹 API de geração de vídeos disponível em http://localhost:${PORT}`);
-    console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-  });
-}
-
-// Para Vercel
-module.exports = app;
+// Para Netlify Functions
+exports.handler = app;
