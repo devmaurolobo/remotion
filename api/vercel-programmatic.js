@@ -37,10 +37,36 @@ const renderVideoProgrammatic = async (videoData) => {
       const { selectComposition} = require('@remotion/renderer');
 
       console.log('Iniciando renderização programática...');
+      console.log('Diretório atual:', process.cwd());
+      console.log('Arquivos no diretório:', fs.readdirSync(process.cwd()));
+
+      // Tenta diferentes caminhos para o entryPoint
+      const possiblePaths = [
+        path.join(process.cwd(), 'src', 'index.ts'),
+        path.join(process.cwd(), 'src', 'index.js'),
+        path.join(__dirname, '..', 'src', 'index.ts'),
+        path.join(__dirname, '..', 'src', 'index.js'),
+        './src/index.ts',
+        '../src/index.ts'
+      ];
+
+      let entryPoint = null;
+      for (const possiblePath of possiblePaths) {
+        if (fs.existsSync(possiblePath)) {
+          entryPoint = possiblePath;
+          console.log('EntryPoint encontrado:', entryPoint);
+          break;
+        }
+      }
+
+      if (!entryPoint) {
+        reject(new Error(`EntryPoint não encontrado. Tentados: ${possiblePaths.join(', ')}`));
+        return;
+      }
 
       // Bundle do projeto
       const bundled = await bundle({
-        entryPoint: path.join(process.cwd(), 'src', 'index.ts'),
+        entryPoint: entryPoint,
         webpackOverride: (config) => config,
       });
 
