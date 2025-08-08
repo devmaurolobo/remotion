@@ -33,15 +33,28 @@ const renderVideoWithLambda = async (videoData) => {
     try {
       console.log('Iniciando renderização com Remotion Lambda...');
       
-      // Importa o Remotion Lambda
-      const { renderMedia, selectComposition, getCompositions } = require('@remotion/renderer');
-      const { bundle } = require('@remotion/bundler');
-      
-      // Configura variáveis de ambiente
+      // Configura variáveis de ambiente para o Remotion usar /tmp
       process.env.REMOTION_CACHE_DIR = '/tmp';
       process.env.REMOTION_OUTPUT_DIR = '/tmp';
       process.env.REMOTION_TEMP_DIR = '/tmp';
       process.env.REMOTION_BROWSER_CACHE_DIR = '/tmp';
+      
+      // Desabilita o download automático do Chrome
+      process.env.REMOTION_DISABLE_BROWSER_DOWNLOAD = 'true';
+      
+      // Sobrescreve a função de download do browser para evitar erros
+      const originalMkdir = require('fs').promises.mkdir;
+      require('fs').promises.mkdir = async (path, options) => {
+        if (path.includes('.remotion')) {
+          console.log('Interceptado tentativa de criar diretório .remotion:', path);
+          return Promise.resolve();
+        }
+        return originalMkdir(path, options);
+      };
+      
+      // Importa o Remotion Lambda
+      const { renderMedia, selectComposition, getCompositions } = require('@remotion/renderer');
+      const { bundle } = require('@remotion/bundler');
       
       console.log('Diretório atual:', process.cwd());
       console.log('Arquivos disponíveis:', fs.readdirSync(process.cwd()));
@@ -87,8 +100,15 @@ const renderVideoWithLambda = async (videoData) => {
       
       console.log('Bundle criado, buscando composições...');
       
-      // Busca as composições
-      const compositions = await getCompositions(bundled);
+      // Busca as composições com configurações específicas para Vercel
+      const compositions = await getCompositions(bundled, {
+        onBrowserDownload: () => {
+          console.log('Tentando baixar browser...');
+          return Promise.resolve();
+        },
+        browserExecutable: null, // Usa o Chrome disponível no sistema
+      });
+      
       console.log('Composições encontradas:', compositions.map(c => c.id));
       
       // Seleciona a composição VideoComposition
@@ -118,20 +138,7 @@ const renderVideoWithLambda = async (videoData) => {
         onProgress: (progress) => {
           console.log(`Progresso: ${Math.round(progress * 100)}%`);
         },
-        // Configurações específicas para serverless
-        browserExecutable: null,
-        chromiumOptions: {
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process'
-          ]
-        }
+        browserExecutable: null, // Usa o Chrome disponível no sistema
       });
       
       console.log('Renderização concluída, lendo arquivo...');
