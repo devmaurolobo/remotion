@@ -21,7 +21,10 @@
     }
   ],
   "env": {
+    "NODE_ENV": "production",
     "REMOTION_CACHE_DIR": "/tmp",
-    "REMOTION_OUTPUT_DIR": "/tmp"
+    "REMOTION_OUTPUT_DIR": "/tmp",
+    "REMOTION_TEMP_DIR": "/tmp",
+    "REMOTION_BROWSER_CACHE_DIR": "/tmp"
   }
 }

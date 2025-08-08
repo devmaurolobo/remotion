@@ -31,6 +31,12 @@ const validateVideoData = (data) => {
 const renderVideoProgrammatic = async (videoData) => {
   return new Promise(async (resolve, reject) => {
     try {
+      // Configura variáveis de ambiente para o Remotion usar /tmp
+      process.env.REMOTION_CACHE_DIR = '/tmp';
+      process.env.REMOTION_OUTPUT_DIR = '/tmp';
+      process.env.REMOTION_TEMP_DIR = '/tmp';
+      process.env.REMOTION_BROWSER_CACHE_DIR = '/tmp';
+      
       // Importa os módulos do Remotion programaticamente
       const { bundle} = require('@remotion/bundler');
       const { getCompositions, renderMedia} = require('@remotion/renderer');
