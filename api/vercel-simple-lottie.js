@@ -34,14 +34,35 @@ const simulateLottieRender = async (videoData) => {
       console.log('Simulando renderização do template teste.json...');
       
       // Lê o template teste.json
-      const templatePath = path.join('/var/task', 'src', 'teste.json');
-      let templateData = null;
+      const possiblePaths = [
+        path.join('/var/task', 'src', 'teste.json'),
+        path.join('/var/task', 'teste.json'),
+        path.join(process.cwd(), 'src', 'teste.json'),
+        path.join(process.cwd(), 'teste.json')
+      ];
       
-      try {
-        templateData = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
-        console.log('Template teste.json carregado com sucesso');
-      } catch (e) {
-        console.log('Erro ao carregar template, usando dados padrão');
+      let templateData = null;
+      let templatePath = null;
+      
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          templatePath = p;
+          break;
+        }
+      }
+      
+      if (templatePath) {
+        try {
+          templateData = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
+          console.log('Template teste.json carregado com sucesso:', templatePath);
+        } catch (e) {
+          console.log('Erro ao parsear template:', e.message);
+          templateData = null;
+        }
+      }
+      
+      if (!templateData) {
+        console.log('Usando dados padrão para template');
         templateData = {
           v: "5.7.4",
           fr: 24,
